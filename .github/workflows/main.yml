@@ -51,6 +51,7 @@ jobs:
             MINOR='0'
             PATCH='0'
           else
+            CURRENT_TAG=${CURRENT_TAG#v}
             IFS='.' read -ra TAG_PARTS <<< "$CURRENT_TAG"
             if [[ ${#TAG_PARTS[@]} -ne 3 ]]; then
             echo "Current tag not a valid. Defaulting to v1.0.0."
@@ -58,7 +59,6 @@ jobs:
               MINOR='0'
               PATCH='0'
             else
-              CURRENT_TAG=${CURRENT_TAG#v}
               MAJOR="${TAG_PARTS[0]}"
               MINOR="${TAG_PARTS[1]}"
               PATCH=$(( ${TAG_PARTS[2]} + 1 ))
