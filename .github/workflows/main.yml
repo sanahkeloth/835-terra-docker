@@ -36,16 +36,18 @@ jobs:
           echo "ECR_REPOSITORY_MYSQL=mysql_image" >> $GITHUB_ENV
           echo "ECR_REPOSITORY_APP=app_image" >> $GITHUB_ENV
 
-      - name: Get Current Image Tag
-        id: get-current-tag
+      - name: Get Current Image Tags
+        id: get-current-tags
         run: |
-          CURRENT_TAG=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails |
-          sort_by(@, &imagePushedAt)[-1].imageTags' --output text)
-          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+          IMAGE_TAGS=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails[].imageTags' --output json)
+          echo "IMAGE_TAGS=$IMAGE_TAGS" >> $GITHUB_ENV
 
-      - name: Increment the version tag
+      - name: Find and Increment Version Tag
         id: increment-version
         run: |
+          CURRENT_TAG=$(echo "$IMAGE_TAGS" | jq -r 'map(select(startswith("v")))[0]')
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+   
           if [[ -z "$CURRENT_TAG" || "$CURRENT_TAG" == None* ]]; then
           echo "Using v1.0.0 as the base."
             MAJOR='1'
@@ -64,7 +66,7 @@ jobs:
               PATCH=$(( ${TAG_PARTS[2]} + 1 ))
             fi
           fi
-          NEW_TAG="$MAJOR.$MINOR.$PATCH"
+          NEW_TAG="v$MAJOR.$MINOR.$PATCH"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
       - name: Build, test, tag, and push mysql image to Amazon ECR
