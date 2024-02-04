@@ -49,17 +49,24 @@ jobs:
       - name: Increment the version tag
         id: increment-version
         run: |
-          # Split the version tag on the dot
-          IFS='.' read -ra TAG_PARTS <<< "$CURRENT_TAG"
-          if [[ ${#TAG_PARTS[@]} -ne 3 ]]; then
-            echo "New tag v1.0.0 is used as the base."
-            TAG_PARTS=('1' '1' '0')
+          if [[ -z "$CURRENT_TAG" || "$CURRENT_TAG" == None* ]]; then
+          echo "Using v1.0.0 as the base."
+            MAJOR='1'
+            MINOR='0'
+            PATCH='0'
+          else
+            IFS='.' read -ra TAG_PARTS <<< "$CURRENT_TAG"
+            if [[ ${#TAG_PARTS[@]} -ne 3 ]]; then
+            echo "Current tag not a valid. Defaulting to v1.0.0."
+              MAJOR='1'
+              MINOR='0'
+              PATCH='0'
+            else
+              MAJOR="${TAG_PARTS[0]}"
+              MINOR="${TAG_PARTS[1]}"
+              PATCH=$(( ${TAG_PARTS[2]} + 1 ))
+            fi
           fi
-          MAJOR="${TAG_PARTS[0]}"
-          MINOR="${TAG_PARTS[1]}"
-          PATCH="${TAG_PARTS[2]}"
-          # Increment the PATCH version
-          PATCH=$(($PATCH + 1))
           NEW_TAG="$MAJOR.$MINOR.$PATCH"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
