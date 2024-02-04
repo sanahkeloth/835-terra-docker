@@ -51,6 +51,10 @@ jobs:
         run: |
           # Split the version tag on the dot
           IFS='.' read -ra TAG_PARTS <<< "$CURRENT_TAG"
+          if [[ ${#TAG_PARTS[@]} -ne 3 ]]; then
+            echo "New tag v1.0.0 is used as the base."
+            TAG_PARTS=('1' '1' '0')
+          fi
           MAJOR="${TAG_PARTS[0]}"
           MINOR="${TAG_PARTS[1]}"
           PATCH="${TAG_PARTS[2]}"
