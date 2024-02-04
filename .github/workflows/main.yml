@@ -94,5 +94,5 @@ jobs:
           # Unit tests
           curl localhost:8082 -vvv
           
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL --all-tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP --all-tags
