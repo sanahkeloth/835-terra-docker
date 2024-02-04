@@ -40,10 +40,10 @@ jobs:
         id: get-current-tags
         run: |
           CURRENT_TAG=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails | sort_by(@, &imagePushedAt)[-1].imageTags' --output json)
-          if [ -n "$CURRENT_TAG" ]; then
-            CURRENT_TAG=$(echo "$CURRENT_TAG" | jq -r 'map(select(startswith("v")))[0]')
-          else 
+          if [ $CURRENT_TAG == null ]; then
             CURRENT_TAG="None"
+          else 
+            CURRENT_TAG=$(echo "$CURRENT_TAG" | jq -r 'map(select(startswith("v")))[0]')
           fi
            echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
 
