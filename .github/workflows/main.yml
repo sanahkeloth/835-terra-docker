@@ -35,6 +35,7 @@ jobs:
           echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
           echo "ECR_REPOSITORY_MYSQL=mysql_image" >> $GITHUB_ENV
           echo "ECR_REPOSITORY_APP=app_image" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY_PROXY=proxy_image" >> $GITHUB_ENV
 
       - name: Get Current Image Tags
         id: get-current-tags
@@ -99,6 +100,8 @@ jobs:
           
           # Unit tests
           curl localhost:8082 -vvv
+
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PROXY }}:$NEW_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PROXY }}:latest -f Dockerfile_nginx .
           
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL --all-tags
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP --all-tags
