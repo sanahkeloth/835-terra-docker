@@ -39,15 +39,12 @@ jobs:
       - name: Get Current Image Tags
         id: get-current-tags
         run: |
-          IMAGE_TAGS=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails[].imageTags' --output json)
-          echo "IMAGE_TAGS=$IMAGE_TAGS" >> $GITHUB_ENV
+          CURRENT_TAG=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails[].imageTags' --output json | jq -r 'map(select(startswith("v")))[0]')
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
 
       - name: Find and Increment Version Tag
         id: increment-version
         run: |
-          CURRENT_TAG=$(echo "$IMAGE_TAGS" | jq -r 'map(select(startswith("v")))[0]')
-          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
-   
           if [[ -z "$CURRENT_TAG" || "$CURRENT_TAG" == None* ]]; then
           echo "Using v1.0.0 as the base."
             MAJOR='1'
