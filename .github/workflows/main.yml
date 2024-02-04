@@ -1,0 +1,94 @@
+name: Deploy to ECR
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: us-east-1
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
+          aws configure set region us-east-1
+
+      - name: Set up environment variables for repositories
+        run: |
+          echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY_mysql=mysql_image" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY_app=app_image" >> $GITHUB_ENV
+
+      - name: Get Current Image Tag
+        id: get-current-tag
+        run: |
+          CURRENT_TAG=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_app --query 'imageDetails |
+          sort_by(@, &imagePushedAt)[-1].imageTags' --output text)
+          if [[ -z "$CURRENT_TAG" ]]; then
+          CURRENT_TAG='v1.0.0'
+          fi
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+
+      - name: Increment the version tag
+        id: increment-version
+        run: |
+          # Split the version tag on the dot
+          IFS='.' read -ra TAG_PARTS <<< "$CURRENT_TAG"
+          MAJOR="${TAG_PARTS[0]}"
+          MINOR="${TAG_PARTS[1]}"
+          PATCH="${TAG_PARTS[2]}"
+          # Increment the PATCH version
+          PATCH=$(($PATCH + 1))
+          NEW_TAG="$MAJOR.$MINOR.$PATCH"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+      - name: Build, test, tag, and push mysql image to Amazon ECR
+        run: |
+          echo "Starting DB container..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_mysql:$NEW_TAG -f Dockerfile_mysql .
+          DBID=$(docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=pw --net custom_nw --name my_db my_db_image)
+
+          echo "Waiting for MySQL to be ready..."
+          until docker exec $DBID mysqladmin ping -h"localhost" --silent; do
+            echo -n "."
+            sleep 1
+          done
+          echo "MySQL is up and running!"
+
+          DBHOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $DBID)
+          export DBHOST
+          export DBPORT=3306
+
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_app:$NEW_TAG .
+
+          echo "Starting webserver containers..."
+          (docker run -p 8081:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="blue" --net custom_nw -d --name app_blue app_image && echo "App1 started") &
+          (docker run -p 8082:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="pink" --net custom_nw -d --name app_pink app_image && echo "App2 started") &
+          (docker run -p 8083:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="lime" --net custom_nw -d --name app_lime app_image && echo "App3 started") &
+          wait
+          echo "All containers started!"
+          
+          # Unit tests
+          curl localhost:8081 -vvv
+          curl localhost:8082 -vvv
+          curl localhost:8083 -vvv
+          
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_mysql:$NEW_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_app:$NEW_TAG
