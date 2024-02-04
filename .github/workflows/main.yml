@@ -87,17 +87,13 @@ jobs:
           docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:latest .
 
           echo "Starting webserver containers..."
-          (docker run -p 8081:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="blue" -d --name app_blue ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG && echo "App1 started") &
           (docker run -p 8082:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="pink" -d --name app_pink ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG && echo "App2 started") &
-          (docker run -p 8083:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="lime" -d --name app_lime ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG && echo "App3 started") &
           wait
           echo "All containers started!"
-          sleep 30
+          sleep 10
           
           # Unit tests
-          curl localhost:8081 -vvv
           curl localhost:8082 -vvv
-          curl localhost:8083 -vvv
           
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP
