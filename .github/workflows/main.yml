@@ -58,6 +58,7 @@ jobs:
               MINOR='0'
               PATCH='0'
             else
+              CURRENT_TAG=${CURRENT_TAG#v}
               MAJOR="${TAG_PARTS[0]}"
               MINOR="${TAG_PARTS[1]}"
               PATCH=$(( ${TAG_PARTS[2]} + 1 ))
