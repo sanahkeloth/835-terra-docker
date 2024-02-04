@@ -84,7 +84,7 @@ jobs:
           (docker run -p 8083:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="lime" -d --name app_lime ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG && echo "App3 started") &
           wait
           echo "All containers started!"
-          
+          sleep 30
           # Unit tests
           curl localhost:8081 -vvv
           curl localhost:8082 -vvv
