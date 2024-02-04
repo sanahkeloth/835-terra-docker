@@ -70,7 +70,7 @@ jobs:
       - name: Build, test, tag, and push mysql image to Amazon ECR
         run: |
           echo "Starting DB container..."
-          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG -f Dockerfile_mysql .
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG -t -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:latest -f Dockerfile_mysql .
           DBID=$(docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} --name my_db ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG)
           
           echo "Waiting for MySQL to be ready..."
@@ -84,7 +84,7 @@ jobs:
           echo "DBHOST=$DBHOST" >> $GITHUB_ENV
           echo "DBPORT=3306" >> $GITHUB_ENV
 
-          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG .
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:latest .
 
           echo "Starting webserver containers..."
           (docker run -p 8081:8080 -e DBHOST=$DBHOST -e DBPORT=$DBPORT -e APP_COLOR="blue" -d --name app_blue ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_APP }}:$NEW_TAG && echo "App1 started") &
@@ -99,5 +99,5 @@ jobs:
           curl localhost:8082 -vvv
           curl localhost:8083 -vvv
           
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL:$NEW_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP:$NEW_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP
