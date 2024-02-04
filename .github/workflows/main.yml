@@ -41,9 +41,6 @@ jobs:
         run: |
           CURRENT_TAG=$(aws ecr describe-images --repository-name $ECR_REPOSITORY_APP --query 'imageDetails |
           sort_by(@, &imagePushedAt)[-1].imageTags' --output text)
-          if [[ -z "$CURRENT_TAG" || "$CURRENT_TAG" == None* ]]; then
-          CURRENT_TAG='v1.1.0'
-          fi
           echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
 
       - name: Increment the version tag
@@ -96,6 +93,7 @@ jobs:
           wait
           echo "All containers started!"
           sleep 30
+          
           # Unit tests
           curl localhost:8081 -vvv
           curl localhost:8082 -vvv
