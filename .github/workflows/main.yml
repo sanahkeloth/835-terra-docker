@@ -70,8 +70,8 @@ jobs:
       - name: Build, test, tag, and push mysql image to Amazon ECR
         run: |
           echo "Starting DB container..."
-          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG -t -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:latest -f Dockerfile_mysql .
-          DBID=$(docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} --name my_db ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG)
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:$NEW_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }}:latest -f Dockerfile_mysql .
+          DBID=$(docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} --name my_db ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_MYSQL }})
           
           echo "Waiting for MySQL to be ready..."
           until docker exec $DBID mysqladmin ping -h"localhost" --silent; do
