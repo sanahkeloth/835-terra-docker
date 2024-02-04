@@ -3,7 +3,9 @@ FROM ubuntu:20.04
 RUN apt-get update -y && apt-get install -y \
     python3-pip \
     mysql-client \
- && rm -rf /var/lib/apt/lists/*
+    iputils-ping \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
 
