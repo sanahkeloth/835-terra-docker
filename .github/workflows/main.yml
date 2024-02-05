@@ -105,3 +105,4 @@ jobs:
           
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL --all-tags
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP --all-tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_PROXY --all-tags
